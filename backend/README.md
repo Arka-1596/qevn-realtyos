@@ -42,11 +42,13 @@ Base prefix: `/api/v1`.
 | Admin | GET | `/admin/leads` |
 | Admin | POST | `/admin/leads/{id}/notes` |
 | Admin | GET, POST | `/admin/agents` |
-| Admin | GET, PATCH | `/admin/visits/{id}` |
+| Admin | GET | `/admin/visits` |
+| Admin | PATCH | `/admin/visits/{id}` |
 | Agent | GET | `/agent/leads` |
 | Agent | GET, PATCH | `/agent/leads/{id}` |
 | Agent | POST | `/agent/leads/{id}/notes` |
-| Agent | GET, PATCH | `/agent/visits/{id}` |
+| Agent | GET | `/agent/visits` |
+| Agent | PATCH | `/agent/visits/{id}` |
 
 GET `/properties` returns `{items, total, page, limit}` using published records only.
 Login expects `{email,password}`, sets HttpOnly `qevn_session` and readable `qevn_csrf` cookies, and responds with `{id,full_name,email,role,is_active}`.
