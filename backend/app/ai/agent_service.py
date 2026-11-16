@@ -442,6 +442,7 @@ def chat(
 
     matches = []
     pending = None
+    tool_calls_used = 0
     client = _provider()
 
     try:
@@ -468,11 +469,16 @@ def chat(
                 break
 
             for call in choice.tool_calls[:3]:
+                tool_calls_used += 1
                 try:
+                    if tool_calls_used > 5:
+                        raise ValueError("Tool call limit reached")
                     arguments = json.loads(
                         call.function.arguments
                     )
 
+                    if not isinstance(arguments, dict):
+                        raise ValueError("Tool arguments must be an object")
                     value, next_pending = _execute_tool(
                         db,
                         conversation,
@@ -496,7 +502,9 @@ def chat(
                     ValueError,
                     ValidationError,
                     HTTPException,
-                    KeyError
+                    KeyError,
+                    TypeError,
+                    OverflowError
                 ):
                     value = {
                         "error": "Invalid or unavailable operation"
@@ -509,6 +517,13 @@ def chat(
                         value, default=str
                     )
                 })
+                if pending:
+                    break
+
+            if pending:
+                # A write is never executed by the model. Return control to the customer.
+                text = "Please review the pending action and confirm it to submit your request."
+                break
 
         else:
             text = (
