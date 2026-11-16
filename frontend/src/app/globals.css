@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * QEVN RealtyOS — Design System
+ * Project color tokens inspired by the assessment.
+ * These are not claimed to be an official QEVN brand guide.
+ */
+
+:root {
+  --brand-ink: #131313;
+  --brand-lime: #cdff75;
+  --brand-green: #9ad300;
+  --brand-cream: #f4f6eb;
+  --brand-paper: #ffffff;
+
+  --background: #f4f6eb;
+  --foreground: #131313;
+
+  --card: #ffffff;
+  --card-foreground: #131313;
+
+  --popover: #ffffff;
+  --popover-foreground: #131313;
+
+  --primary: #cdff75;
+  --primary-foreground: #131313;
+
+  --secondary: #eaeee2;
+  --secondary-foreground: #20221f;
+
+  --muted: #ebefe5;
+  --muted-foreground: #565d51;
+
+  --accent: #e9f8cf;
+  --accent-foreground: #20221f;
+
+  --destructive: #b42318;
+
+  --border: #dce2d6;
+  --input: #cfd7c6;
+  --ring: #668f24;
+
+  --radius: 0.75rem;
+
+  --chart-1: #668f24;
+  --chart-2: #96b75a;
+  --chart-3: #20221f;
+  --chart-4: #a7afa0;
+  --chart-5: #6f8370;
+
+  --sidebar: #20221f;
+  --sidebar-foreground: #f4f6eb;
+  --sidebar-primary: #cdff75;
+  --sidebar-primary-foreground: #131313;
+  --sidebar-accent: #383c33;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #383c33;
+  --sidebar-ring: #cdff75;
+}
+
+.dark {
+  --background: #131313;
+  --foreground: #f4f6eb;
+
+  --card: #20221f;
+  --card-foreground: #f4f6eb;
+
+  --popover: #20221f;
+  --popover-foreground: #f4f6eb;
+
+  --primary: #cdff75;
+  --primary-foreground: #131313;
+
+  --secondary: #30352d;
+  --secondary-foreground: #f4f6eb;
+
+  --muted: #2e332b;
+  --muted-foreground: #c5cbbd;
+
+  --accent: #38472a;
+  --accent-foreground: #f4f6eb;
+
+  --destructive: #f46e65;
+
+  --border: #3e463a;
+  --input: #505b49;
+  --ring: #cdff75;
+
+  --sidebar: #131313;
+  --sidebar-foreground: #f4f6eb;
+  --sidebar-primary: #cdff75;
+  --sidebar-primary-foreground: #131313;
+  --sidebar-accent: #30352d;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #3e463a;
+  --sidebar-ring: #cdff75;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-lime: var(--brand-lime);
+  --color-brand-green: var(--brand-green);
+  --color-brand-cream: var(--brand-cream);
+
+  --font-sans:
+    var(--font-manrope), Arial, Helvetica, sans-serif;
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family:
+      var(--font-manrope), Arial, Helvetica, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  a,
+  button,
+  input,
+  textarea,
+  select {
+    outline-offset: 3px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+  }
+
+  ::selection {
+    background: #cdff75;
+    color: #131313;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
