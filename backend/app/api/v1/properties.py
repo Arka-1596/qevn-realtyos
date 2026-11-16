@@ -85,6 +85,9 @@ def list_properties(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=12, ge=1, le=50)
 ):
+    if min_price is not None and max_price is not None and min_price > max_price:
+        raise HTTPException(status_code=422, detail="min_price cannot exceed max_price")
+
     conditions = filtered_query(
         city, keyword, min_price, max_price,
         property_type, listing_type, bhk

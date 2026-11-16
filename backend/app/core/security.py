@@ -105,8 +105,10 @@ def require_csrf_if_write(
 ):
     if (
         request.method not in ("GET", "HEAD", "OPTIONS")
-        and request.headers.get("X-CSRF-Token")
-        != session.csrf_token
+        and not secrets.compare_digest(
+            request.headers.get("X-CSRF-Token", ""),
+            session.csrf_token
+        )
     ):
         raise HTTPException(
             status_code=403,

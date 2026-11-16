@@ -1,0 +1,47 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, "feature/backend-*"]
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+  workflow_dispatch:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: qevn
+          POSTGRES_PASSWORD: test_password_only
+          POSTGRES_DB: qevn_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U qevn -d qevn_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgresql+psycopg://qevn:test_password_only@localhost:5432/qevn_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: python -m pip install -r requirements.txt
+      - run: python -m compileall -q app scripts
+      - run: python -m ruff check app scripts tests
+      - run: alembic upgrade head
+      - run: python -m pytest -q
+      - run: python -m pip_audit -r requirements.txt
+      - run: docker build -t qevn-realtyos-backend .

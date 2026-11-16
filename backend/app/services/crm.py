@@ -1,5 +1,5 @@
 
-from datetime import timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -68,6 +68,20 @@ def update_lead(
     actor: User
 ) -> Lead:
     changes = data.model_dump(exclude_unset=True)
+
+    permitted_transitions = {
+        "NEW": {"CONTACTED", "LOST"},
+        "CONTACTED": {"QUALIFIED", "LOST"},
+        "QUALIFIED": {"VISIT_SCHEDULED", "NEGOTIATION", "LOST"},
+        "VISIT_SCHEDULED": {"NEGOTIATION", "WON", "LOST"},
+        "NEGOTIATION": {"WON", "LOST"},
+        "WON": set(),
+        "LOST": set(),
+    }
+    if "status" in changes and changes["status"] is not None:
+        proposed = changes["status"].value
+        if proposed != lead.status and proposed not in permitted_transitions.get(lead.status, set()):
+            raise HTTPException(status_code=409, detail="Invalid lead status transition")
 
     if (
         "assigned_agent_id" in changes
@@ -197,6 +211,17 @@ def update_visit(
     actor: User
 ) -> SiteVisit:
     proposed_status = payload.status.value
+    allowed_transitions = {
+        "REQUESTED": {"CONFIRMED", "CANCELLED"},
+        "CONFIRMED": {"COMPLETED", "CANCELLED"},
+        "COMPLETED": set(),
+        "CANCELLED": set(),
+    }
+    if (
+        proposed_status != visit.status
+        and proposed_status not in allowed_transitions.get(visit.status, set())
+    ):
+        raise HTTPException(status_code=409, detail="Invalid visit status transition")
 
     if (
         visit.status in {"COMPLETED", "CANCELLED"}
@@ -278,6 +303,8 @@ def update_visit(
             )
 
         when = when.astimezone(timezone.utc)
+        if when <= datetime.now(timezone.utc):
+            raise HTTPException(status_code=422, detail="Confirmed visit must be in the future")
 
         # Each demonstration visit occupies 60 minutes.
         existing = db.scalars(
