@@ -9,9 +9,10 @@ export function SiteFooter() {
           <Brand inverted />
 
           <p className="text-sm leading-relaxed text-white/60">
-            A QEVN-aligned technical assessment frontend.
-            Not an official production launch, and no live
-            inventory is shown in Stage 1.
+            An intelligent real estate marketplace and CRM
+            developed as a QEVN technical assessment.
+            Demonstration property records are not genuine
+            real estate offers.
           </p>
         </div>
 
@@ -19,27 +20,46 @@ export function SiteFooter() {
           aria-label="Footer navigation"
           className="flex flex-wrap items-start gap-5 text-sm font-semibold text-white/75"
         >
-          <Link href="/#platform" className="hover:text-white">
+          <Link
+            href="/properties"
+            className="hover:text-white"
+          >
+            Properties
+          </Link>
+
+          <Link
+            href="/#platform"
+            className="hover:text-white"
+          >
             Platform
           </Link>
 
-          <Link href="/#workflow" className="hover:text-white">
-            Process
+          <Link
+            href="/#workflow"
+            className="hover:text-white"
+          >
+            How it works
           </Link>
 
-          <Link href="/admin" className="hover:text-white">
+          <Link
+            href="/admin"
+            className="hover:text-white"
+          >
             Admin preview
           </Link>
 
-          <Link href="/agent" className="hover:text-white">
+          <Link
+            href="/agent"
+            className="hover:text-white"
+          >
             Agent preview
           </Link>
         </nav>
       </div>
 
       <div className="mx-auto flex max-w-[1360px] flex-wrap justify-between gap-3 pt-6 text-xs text-white/50">
-        <span>Qevn / RealtyOS — UI foundation</span>
-        <span>Stage 01 / Assessment prototype</span>
+        <span>Qevn / RealtyOS</span>
+        <span>Assessment prototype · Property marketplace</span>
       </div>
     </footer>
   );

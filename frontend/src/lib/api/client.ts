@@ -1,15 +1,3 @@
-/**
- * QEVN RealtyOS API Client
- *
- * Stage 1: Integration foundation only.
- *
- * Future frontend components should import apiRequest
- * rather than implementing individual hardcoded fetch URLs.
- *
- * Authentication and authorization must be implemented
- * before accessing protected CRM endpoints.
- */
-
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -18,6 +6,46 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
   }
+}
+
+function getErrorMessage(payload: unknown): string | null {
+  if (typeof payload !== "object" || payload === null) {
+    return null;
+  }
+
+  if ("detail" in payload) {
+    const detail = payload.detail;
+
+    if (typeof detail === "string") {
+      return detail;
+    }
+
+    if (Array.isArray(detail)) {
+      return detail
+        .map((item: unknown) => {
+          if (
+            typeof item === "object" &&
+            item !== null &&
+            "msg" in item &&
+            typeof item.msg === "string"
+          ) {
+            return item.msg;
+          }
+
+          return "Invalid request field";
+        })
+        .join("; ");
+    }
+  }
+
+  if (
+    "message" in payload &&
+    typeof payload.message === "string"
+  ) {
+    return payload.message;
+  }
+
+  return null;
 }
 
 export async function apiRequest<T>(
@@ -32,7 +60,7 @@ export async function apiRequest<T>(
 
   if (!baseUrl) {
     throw new Error(
-      "NEXT_PUBLIC_API_BASE_URL is not configured. No backend request was sent.",
+      "API base URL is missing. Configure NEXT_PUBLIC_API_BASE_URL.",
     );
   }
 
@@ -43,47 +71,40 @@ export async function apiRequest<T>(
     !(init.body instanceof FormData) &&
     !headers.has("Content-Type")
   ) {
-    headers.set(
-      "Content-Type",
-      "application/json",
-    );
+    headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(
-    `${baseUrl}${path}`,
-    {
+  let response: Response;
+
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
       ...init,
       headers,
       credentials: "include",
       cache: init.cache ?? "no-store",
-    },
-  );
-
-  if (!response.ok) {
-    let message =
-      `Request failed (${response.status}).`;
-
-    try {
-      const payload: unknown =
-        await response.json();
-
-      if (
-        typeof payload === "object" &&
-        payload !== null &&
-        "message" in payload &&
-        typeof payload.message === "string"
-      ) {
-        message = payload.message;
-      }
-    } catch {
-      // Keep the generic error message if
-      // the backend returns a non-JSON response.
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
     }
 
     throw new ApiError(
-      response.status,
-      message,
+      0,
+      "Unable to reach the backend. Check that FastAPI is running and CORS is configured.",
     );
+  }
+
+  if (!response.ok) {
+    let message = `Request failed (${response.status}).`;
+
+    try {
+      const payload: unknown = await response.json();
+      message = getErrorMessage(payload) ?? message;
+    } catch {
+      // Preserve generic error for non-JSON responses.
+    }
+
+    throw new ApiError(response.status, message);
   }
 
   if (response.status === 204) {

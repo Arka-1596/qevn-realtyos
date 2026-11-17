@@ -1,7 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Menu } from "lucide-react";
+
+import {
+  ArrowUpRight,
+  Menu,
+} from "lucide-react";
+
 import { useEffect, useState } from "react";
 
 import { Brand } from "./brand";
@@ -16,6 +21,10 @@ import {
 } from "@/components/ui/sheet";
 
 const navigation = [
+  {
+    label: "Properties",
+    href: "/properties",
+  },
   {
     label: "Platform",
     href: "/#platform",
@@ -73,7 +82,7 @@ export function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-sm text-sm font-semibold text-brand-ink/75 transition-colors hover:text-brand-ink focus-visible:outline-offset-4"
+              className="rounded-sm text-sm font-semibold text-brand-ink/75 transition-colors hover:text-brand-ink"
             >
               {item.label}
             </Link>
@@ -89,15 +98,12 @@ export function SiteHeader() {
           </Link>
 
           <Link
-            href="/admin"
+            href="/properties"
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-ink px-5 text-sm font-semibold text-white hover:bg-[#343a30]"
           >
-            Admin preview
+            Explore properties
 
-            <ArrowUpRight
-              aria-hidden="true"
-              className="ml-2 size-4"
-            />
+            <ArrowUpRight className="ml-2 size-4" />
           </Link>
         </div>
 
@@ -109,10 +115,7 @@ export function SiteHeader() {
             className="inline-flex size-11 items-center justify-center rounded-xl border border-brand-ink/20 bg-white text-brand-ink lg:hidden"
             aria-label="Open navigation menu"
           >
-            <Menu
-              aria-hidden="true"
-              className="size-5"
-            />
+            <Menu className="size-5" />
           </SheetTrigger>
 
           <SheetContent
@@ -125,7 +128,7 @@ export function SiteHeader() {
               </SheetTitle>
 
               <SheetDescription className="text-sm text-muted-foreground">
-                Frontend foundation — Stage 1
+                Intelligent property discovery
               </SheetDescription>
             </SheetHeader>
 
@@ -147,16 +150,21 @@ export function SiteHeader() {
               <div className="my-3 border-t border-brand-ink/15" />
 
               <Link
-                href="/admin"
+                href="/properties"
                 onClick={() => setMenuOpen(false)}
                 className="flex min-h-12 items-center justify-between rounded-xl bg-brand-lime px-4 font-semibold"
               >
-                Admin preview
+                Explore properties
 
-                <ArrowUpRight
-                  aria-hidden="true"
-                  className="size-4"
-                />
+                <ArrowUpRight className="size-4" />
+              </Link>
+
+              <Link
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="flex min-h-12 items-center rounded-xl px-4 font-semibold hover:bg-brand-ink/5"
+              >
+                Admin preview
               </Link>
 
               <Link

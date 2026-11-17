@@ -1,5 +1,10 @@
+
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Manrope } from "next/font/google";
+
+import { PropertyConcierge } from "@/components/ai/property-concierge";
+
 import "./globals.css";
 
 const manrope = Manrope({
@@ -13,8 +18,10 @@ export const metadata: Metadata = {
     default: "Qevn / RealtyOS",
     template: "%s | Qevn RealtyOS",
   },
+
   description:
-    "An intelligent real estate operating system. Frontend foundation preview for a technical assessment.",
+    "An intelligent real estate marketplace connecting property discovery, enquiries, visits and automated workflows.",
+
   robots: {
     index: false,
     follow: false,
@@ -37,6 +44,10 @@ export default function RootLayout({
         </a>
 
         {children}
+
+        <Suspense fallback={null}>
+          <PropertyConcierge />
+        </Suspense>
       </body>
     </html>
   );
