@@ -12,3 +12,17 @@ from app.models.tables import (
     SiteVisit,
     User,
 )
+
+__all__ = [
+    "AIConversation",
+    "AIMessage",
+    "AuthSession",
+    "Lead",
+    "LeadActivity",
+    "LeadNote",
+    "PendingAIAction",
+    "Property",
+    "PropertyImage",
+    "SiteVisit",
+    "User",
+]

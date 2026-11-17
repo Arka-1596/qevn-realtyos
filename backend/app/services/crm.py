@@ -1,30 +1,40 @@
 
-from datetime import timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.tables import (
-    Lead, LeadActivity, LeadNote,
-    Property, SiteVisit, User
+    Lead,
+    LeadActivity,
+    LeadNote,
+    Property,
+    SiteVisit,
+    User,
 )
 from app.schemas.dto import (
-    AgentLeadPatch, LeadIn, LeadPatch,
-    NoteIn, VisitIn, VisitPatch
+    AgentLeadPatch,
+    LeadIn,
+    LeadPatch,
+    NoteIn,
+    VisitIn,
+    VisitPatch,
 )
 
 
 def get_published_property(
-    db: Session, property_id: str
+    db: Session,
+    property_id: str,
 ) -> Property:
     item = db.get(Property, property_id)
 
     if item is None or not item.is_published:
         raise HTTPException(
             status_code=404,
-            detail="Property not found"
+            detail="Property not found",
         )
+
     return item
 
 
@@ -33,16 +43,20 @@ def create_lead(
     data: LeadIn,
     source: str = "WEBSITE",
     *,
-    commit: bool = True
+    commit: bool = True,
 ) -> Lead:
     if data.property_id:
-        get_published_property(db, data.property_id)
+        get_published_property(
+            db,
+            data.property_id,
+        )
 
     lead = Lead(
         **data.model_dump(),
         source=source,
-        status="NEW"
+        status="NEW",
     )
+
     db.add(lead)
     db.flush()
 
@@ -50,7 +64,7 @@ def create_lead(
         LeadActivity(
             lead_id=lead.id,
             action_type="CREATED",
-            new_value=source
+            new_value=source,
         )
     )
 
@@ -65,16 +79,66 @@ def update_lead(
     db: Session,
     lead: Lead,
     data: LeadPatch | AgentLeadPatch,
-    actor: User
+    actor: User,
 ) -> Lead:
-    changes = data.model_dump(exclude_unset=True)
+    changes = data.model_dump(
+        exclude_unset=True,
+    )
+
+    permitted_transitions = {
+        "NEW": {
+            "CONTACTED",
+            "LOST",
+        },
+        "CONTACTED": {
+            "QUALIFIED",
+            "LOST",
+        },
+        "QUALIFIED": {
+            "VISIT_SCHEDULED",
+            "NEGOTIATION",
+            "LOST",
+        },
+        "VISIT_SCHEDULED": {
+            "NEGOTIATION",
+            "WON",
+            "LOST",
+        },
+        "NEGOTIATION": {
+            "WON",
+            "LOST",
+        },
+        "WON": set(),
+        "LOST": set(),
+    }
+
+    if (
+        "status" in changes
+        and changes["status"] is not None
+    ):
+        proposed = changes["status"].value
+
+        allowed = permitted_transitions.get(
+            lead.status,
+            set(),
+        )
+
+        if (
+            proposed != lead.status
+            and proposed not in allowed
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Invalid lead status transition",
+            )
 
     if (
         "assigned_agent_id" in changes
         and changes["assigned_agent_id"]
     ):
         assignee = db.get(
-            User, changes["assigned_agent_id"]
+            User,
+            changes["assigned_agent_id"],
         )
 
         if (
@@ -84,7 +148,7 @@ def update_lead(
         ):
             raise HTTPException(
                 status_code=422,
-                detail="Invalid active agent"
+                detail="Invalid active agent",
             )
 
     if (
@@ -93,17 +157,24 @@ def update_lead(
     ):
         raise HTTPException(
             status_code=422,
-            detail="Follow-up datetime needs timezone"
+            detail="Follow-up datetime needs timezone",
         )
 
     for field, new_value in changes.items():
-        previous = getattr(lead, field)
+        previous = getattr(
+            lead,
+            field,
+        )
 
         if hasattr(new_value, "value"):
             new_value = new_value.value
 
         if previous != new_value:
-            setattr(lead, field, new_value)
+            setattr(
+                lead,
+                field,
+                new_value,
+            )
 
             db.add(
                 LeadActivity(
@@ -111,12 +182,13 @@ def update_lead(
                     actor_id=actor.id,
                     action_type=field.upper(),
                     previous_value=str(previous),
-                    new_value=str(new_value)
+                    new_value=str(new_value),
                 )
             )
 
     db.commit()
     db.refresh(lead)
+
     return lead
 
 
@@ -124,34 +196,39 @@ def add_note(
     db: Session,
     lead: Lead,
     actor: User,
-    payload: NoteIn
+    payload: NoteIn,
 ) -> LeadNote:
     note = LeadNote(
         lead_id=lead.id,
         author_id=actor.id,
-        content=payload.content
+        content=payload.content,
     )
 
     db.add(note)
+
     db.add(
         LeadActivity(
             lead_id=lead.id,
             actor_id=actor.id,
-            action_type="NOTE_ADDED"
+            action_type="NOTE_ADDED",
         )
     )
 
     db.commit()
     db.refresh(note)
+
     return note
 
 
 def create_visit(
     db: Session,
     data: VisitIn,
-    source: str = "WEBSITE"
+    source: str = "WEBSITE",
 ) -> SiteVisit:
-    get_published_property(db, data.property_id)
+    get_published_property(
+        db,
+        data.property_id,
+    )
 
     lead = create_lead(
         db,
@@ -160,10 +237,10 @@ def create_visit(
             email=data.email,
             phone=data.phone,
             property_id=data.property_id,
-            message=data.customer_notes
+            message=data.customer_notes,
         ),
         source=source,
-        commit=False
+        commit=False,
     )
 
     visit = SiteVisit(
@@ -171,7 +248,7 @@ def create_visit(
         lead_id=lead.id,
         preferred_start_at=data.preferred_start_at,
         status="REQUESTED",
-        customer_notes=data.customer_notes
+        customer_notes=data.customer_notes,
     )
 
     db.add(visit)
@@ -181,12 +258,13 @@ def create_visit(
         LeadActivity(
             lead_id=lead.id,
             action_type="VISIT_REQUESTED",
-            new_value=visit.id
+            new_value=visit.id,
         )
     )
 
     db.commit()
     db.refresh(visit)
+
     return visit
 
 
@@ -194,17 +272,35 @@ def update_visit(
     db: Session,
     visit: SiteVisit,
     payload: VisitPatch,
-    actor: User
+    actor: User,
 ) -> SiteVisit:
     proposed_status = payload.status.value
 
+    allowed_transitions = {
+        "REQUESTED": {
+            "CONFIRMED",
+            "CANCELLED",
+        },
+        "CONFIRMED": {
+            "COMPLETED",
+            "CANCELLED",
+        },
+        "COMPLETED": set(),
+        "CANCELLED": set(),
+    }
+
+    allowed = allowed_transitions.get(
+        visit.status,
+        set(),
+    )
+
     if (
-        visit.status in {"COMPLETED", "CANCELLED"}
-        and proposed_status != visit.status
+        proposed_status != visit.status
+        and proposed_status not in allowed
     ):
         raise HTTPException(
             status_code=409,
-            detail="Finalized visit cannot change status"
+            detail="Invalid visit status transition",
         )
 
     if (
@@ -213,7 +309,7 @@ def update_visit(
     ):
         raise HTTPException(
             status_code=403,
-            detail="Not assigned to visit"
+            detail="Not assigned to visit",
         )
 
     if (
@@ -222,7 +318,7 @@ def update_visit(
     ):
         raise HTTPException(
             status_code=403,
-            detail="Only Admin can assign visits"
+            detail="Only Admin can assign visits",
         )
 
     assigned = (
@@ -232,7 +328,8 @@ def update_visit(
 
     if payload.assigned_agent_id:
         agent = db.get(
-            User, payload.assigned_agent_id
+            User,
+            payload.assigned_agent_id,
         )
 
         if (
@@ -242,7 +339,7 @@ def update_visit(
         ):
             raise HTTPException(
                 status_code=422,
-                detail="Invalid active agent"
+                detail="Invalid active agent",
             )
 
         db.execute(
@@ -251,7 +348,10 @@ def update_visit(
             .with_for_update()
         ).scalar_one()
 
-    elif assigned and proposed_status == "CONFIRMED":
+    elif (
+        assigned
+        and proposed_status == "CONFIRMED"
+    ):
         db.execute(
             select(User)
             .where(User.id == assigned)
@@ -262,7 +362,7 @@ def update_visit(
         if not assigned:
             raise HTTPException(
                 status_code=422,
-                detail="Assign an agent before confirming"
+                detail="Assign an agent before confirming",
             )
 
         when = (
@@ -274,12 +374,21 @@ def update_visit(
         if when.tzinfo is None:
             raise HTTPException(
                 status_code=422,
-                detail="Confirmation datetime needs timezone"
+                detail="Confirmation datetime needs timezone",
             )
 
-        when = when.astimezone(timezone.utc)
+        when = when.astimezone(
+            timezone.utc,
+        )
 
-        # Each demonstration visit occupies 60 minutes.
+        if when <= datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=422,
+                detail="Confirmed visit must be in the future",
+            )
+
+        # A site visit occupies 60 minutes.
+        # Check for overlapping confirmed visits.
         existing = db.scalars(
             select(SiteVisit).where(
                 SiteVisit.id != visit.id,
@@ -297,16 +406,23 @@ def update_visit(
         if existing:
             raise HTTPException(
                 status_code=409,
-                detail="Agent already has a visit near that time"
+                detail=(
+                    "Agent already has a visit "
+                    "near that time"
+                ),
             )
 
         visit.confirmed_start_at = when
 
     if payload.agent_notes is not None:
-        visit.agent_notes = payload.agent_notes
+        visit.agent_notes = (
+            payload.agent_notes
+        )
 
     if payload.assigned_agent_id is not None:
-        visit.assigned_agent_id = payload.assigned_agent_id
+        visit.assigned_agent_id = (
+            payload.assigned_agent_id
+        )
 
     visit.status = proposed_status
 
@@ -315,10 +431,11 @@ def update_visit(
             lead_id=visit.lead_id,
             actor_id=actor.id,
             action_type="VISIT_STATUS",
-            new_value=proposed_status
+            new_value=proposed_status,
         )
     )
 
     db.commit()
     db.refresh(visit)
+
     return visit
