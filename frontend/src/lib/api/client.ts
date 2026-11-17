@@ -1,3 +1,4 @@
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -8,8 +9,13 @@ export class ApiError extends Error {
   }
 }
 
-function getErrorMessage(payload: unknown): string | null {
-  if (typeof payload !== "object" || payload === null) {
+function getErrorMessage(
+  payload: unknown
+): string | null {
+  if (
+    typeof payload !== "object" ||
+    payload === null
+  ) {
     return null;
   }
 
@@ -52,18 +58,6 @@ export async function apiRequest<T>(
   path: `/${string}`,
   init: RequestInit = {},
 ): Promise<T> {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL?.replace(
-      /\/+$/,
-      "",
-    );
-
-  if (!baseUrl) {
-    throw new Error(
-      "API base URL is missing. Configure NEXT_PUBLIC_API_BASE_URL.",
-    );
-  }
-
   const headers = new Headers(init.headers);
 
   if (
@@ -77,34 +71,44 @@ export async function apiRequest<T>(
   let response: Response;
 
   try {
-    response = await fetch(`${baseUrl}${path}`, {
+    response = await fetch(path, {
       ...init,
       headers,
       credentials: "include",
       cache: init.cache ?? "no-store",
     });
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
+    if (
+      error instanceof Error &&
+      error.name === "AbortError"
+    ) {
       throw error;
     }
 
     throw new ApiError(
       0,
-      "Unable to reach the backend. Check that FastAPI is running and CORS is configured.",
+      "Unable to reach the RealtyOS backend.",
     );
   }
 
   if (!response.ok) {
-    let message = `Request failed (${response.status}).`;
+    let message =
+      `Request failed (${response.status}).`;
 
     try {
-      const payload: unknown = await response.json();
-      message = getErrorMessage(payload) ?? message;
+      const payload: unknown =
+        await response.json();
+
+      message =
+        getErrorMessage(payload) ?? message;
     } catch {
-      // Preserve generic error for non-JSON responses.
+      // Preserve generic error.
     }
 
-    throw new ApiError(response.status, message);
+    throw new ApiError(
+      response.status,
+      message,
+    );
   }
 
   if (response.status === 204) {

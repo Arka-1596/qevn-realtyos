@@ -1,4 +1,8 @@
+
 import type { NextConfig } from "next";
+
+const backendUrl =
+  process.env.BACKEND_INTERNAL_URL?.replace(/\/+$/, "");
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
@@ -23,6 +27,21 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+  },
+
+  async rewrites() {
+    if (!backendUrl) {
+      throw new Error(
+        "BACKEND_INTERNAL_URL is not configured."
+      );
+    }
+
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${backendUrl}/api/v1/:path*`,
+      },
+    ];
   },
 };
 
